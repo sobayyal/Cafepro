@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,8 +20,15 @@ const loginFormSchema = z.object({
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function Login() {
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const { login, user, isLoading } = useAuth();
+  const [, navigate] = useLocation();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate("/");
+    }
+  }, [user, isLoading, navigate]);
   
   // Initialize form
   const form = useForm<LoginFormValues>({
@@ -33,14 +41,30 @@ export default function Login() {
   
   // Handle form submission
   async function onSubmit(data: LoginFormValues) {
-    setIsLoading(true);
     try {
       await login(data.username, data.password);
+      // Navigation is handled in the login function of AuthContext
     } catch (error) {
       console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in the login function
     }
+  }
+  
+  // If the user is already logged in or loading, show a loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If already logged in, no need to show the form
+  if (user) {
+    return null; // Will be redirected by the useEffect
   }
   
   return (
@@ -84,8 +108,8 @@ export default function Login() {
                 )}
               />
               
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isLoading}>
+                {form.formState.isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
                   </>
