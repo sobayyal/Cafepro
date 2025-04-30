@@ -29,6 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const currentUser = await getCurrentUser();
         setUser(currentUser);
+        
+        // If user is logged in and currently on login page, redirect to dashboard
+        if (currentUser && window.location.pathname === "/login") {
+          navigate("/");
+        }
       } catch (error) {
         console.error("Error loading user:", error);
       } finally {
@@ -37,17 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadUser();
-  }, []);
+  }, [navigate]);
 
   const login = async (username: string, password: string) => {
     try {
+      setIsLoading(true);
       const user = await loginApi(username, password);
       setUser(user);
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.name}!`,
       });
+      
+      // Force navigation to dashboard
       navigate("/");
+      
+      return user;
     } catch (error) {
       toast({
         title: "Login failed",
@@ -55,6 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
