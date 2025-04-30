@@ -22,3 +22,22 @@ Cafepro is a web-based cafe management system designed to simplify day-to-day op
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/sobayyal/Cafepro.git
+
+2. **Navigate to the project directory**
+   ```bash
+   cd Cafepro
+
+3. **Install dependencies:**
+   ```bash
+  npm install
+
+4. **Set up environment variables:**
+   Create a .env file in the root directory and add the necessary variables (e.g. PORT, MONGO_URI, JWT_SECRET).
+
+6. **Run the application:**
+   ```bash
+  npm start
+
+##Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
