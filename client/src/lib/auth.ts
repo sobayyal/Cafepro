@@ -1,72 +1,72 @@
-import { apiRequest } from "./queryClient";
+import { Switch, Route, useLocation } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/not-found";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import Orders from "@/pages/Orders";
+import CreateOrder from "@/pages/CreateOrder";
+import MenuManagement from "@/pages/MenuManagement";
+import StaffManagement from "@/pages/StaffManagement";
+import Reports from "@/pages/Reports";
+import Settings from "@/pages/Settings";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
-export interface User {
-  id: number;
-  username: string;
-  name: string;
-  role: "admin" | "staff";
-}
+// Auth protection wrapper component
+function ProtectedRoutes() {
+  const { user, isLoading } = useAuth();
+  const [, navigate] = useLocation();
 
-export async function login(username: string, password: string): Promise<User> {
-  try {
-    const response = await apiRequest("POST", "/api/auth/login", { username, password });
-    const userData = await response.json();
-    
-    // Store user in session/local storage for persistence
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    return userData;
-  } catch (error) {
-    // Clear any stored user data on login failure
-    localStorage.removeItem('user');
-    throw error;
-  }
-}
-
-export async function logout(): Promise<void> {
-  await apiRequest("POST", "/api/auth/logout");
-  // Clear stored user data
-  localStorage.removeItem('user');
-}
-
-export async function getCurrentUser(): Promise<User | null> {
-  try {
-    // First check if we have a user in localStorage from a previous session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      // Verify the stored user with the server
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
-      
-      if (response.ok) {
-        return await response.json();
-      } else if (response.status === 401) {
-        // Clear invalid stored user if server says not authenticated
-        localStorage.removeItem('user');
-        return null;
-      }
+  useEffect(() => {
+    // If authentication check is done and no user is found
+    if (!isLoading && !user) {
+      navigate("/login");
     }
+  }, [user, isLoading, navigate]);
 
-    // If no stored user or verification failed, try to get user from server
-    const response = await fetch("/api/auth/me", {
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        localStorage.removeItem('user');
-        return null;
-      }
-      throw new Error("Failed to get current user");
-    }
-
-    const userData = await response.json();
-    // Store the user data from the server
-    localStorage.setItem('user', JSON.stringify(userData));
-    return userData;
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    return null;
+  if (isLoading) {
+    return <div>Loading...</div>; // Or your loading component
   }
+
+  return (
+    <Switch>
+      <Route path="/" component={Dashboard} />
+      <Route path="/orders" component={Orders} />
+      <Route path="/create-order" component={CreateOrder} />
+      <Route path="/menu" component={MenuManagement} />
+      <Route path="/staff" component={StaffManagement} />
+      <Route path="/reports" component={Reports} />
+      <Route path="/settings" component={Settings} />
+      <Route component={NotFound} />
+    </Switch>
+  );
 }
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/login" component={Login} />
+      <Route>
+        <ProtectedRoutes />
+      </Route>
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
