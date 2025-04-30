@@ -29,14 +29,14 @@ Cafepro is a web-based cafe management system designed to simplify day-to-day op
 
 3. **Install dependencies:**
    ```bash
-  npm install
+   npm install
 
 4. **Set up environment variables:**
    Create a .env file in the root directory and add the necessary variables (e.g. PORT, MONGO_URI, JWT_SECRET).
 
 6. **Run the application:**
    ```bash
-  npm start
+   npm start
 
 ##Contributing
 
